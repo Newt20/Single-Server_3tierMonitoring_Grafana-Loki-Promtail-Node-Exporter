@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Directory</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: #64748b;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
+
+    /* Add Button Styling */
+    #add-member-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    #add-member-btn:hover { opacity: 0.9; }
+
+    #status {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #status.error   { background: #450a0a; color: #fca5a5; display: block; }
+    #status.loading { background: #172554; color: #93c5fd; display: block; }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #38bdf8;
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: #fff;
+    }
+
+    .card h2 { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; }
+    .card .role {
+      font-size: 0.82rem;
+      color: #38bdf8;
+      margin: 0.25rem 0 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .card .dept {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .card .joined {
+      font-size: 0.78rem;
+      color: #475569;
+      margin-top: 0.5rem;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      margin-top: 0.75rem;
+    }
+
+    #meta {
+      text-align: center;
+      color: #334155;
+      font-size: 0.78rem;
+      margin-top: 2.5rem;
+    }
+
+    /* --- MODAL STYLES --- */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .modal h2 { margin-bottom: 1.5rem; color: #f1f5f9; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.6rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      box-sizing: border-box;
+    }
+    .form-group input:focus { outline: none; border-color: #38bdf8; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+    .btn-cancel { background: #334155; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; }
+    .btn-save { background: #38bdf8; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Team Directory</h1>
+  <p>Live data from Private-EC2 MySQL via REST API</p>
+  <button id="add-member-btn" onclick="openModal()">+ Add Member</button>
+</header>
+
+<div id="status" class="loading">Fetching team data from API...</div>
+<div id="grid"></div>
+<div id="meta"></div>
+
+<!-- ADD MEMBER MODAL -->
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <h2>Add New Member</h2>
+    <form id="add-member-form" onsubmit="submitMember(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="m-name" required placeholder="e.g. John Doe">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input type="text" id="m-role" required placeholder="e.g. Developer">
+      </div>
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="m-dept" required placeholder="e.g. Engineering">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="m-loc" required placeholder="e.g. New York">
+      </div>
+      <div class="form-group">
+        <label>Joined Date</label>
+        <input type="date" id="m-date" required>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-save">Save Member</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const API_URL = '/api/members';
+  const modal = document.getElementById('addModal');
+
+  async function loadMembers() {
+    const status = document.getElementById('status');
+    const grid   = document.getElementById('grid');
+    const meta   = document.getElementById('meta');
+
+    status.className = 'loading';
+    status.textContent = 'Fetching team data from API...';
+    status.style.display = 'block';
+
+    try {
+      const res  = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      status.style.display = 'none';
+      grid.innerHTML = '';
+
+      data.members.forEach(m => {
+        const initials = m.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        grid.innerHTML += `
+          <div class="card">
+            <div class="avatar">${initials}</div>
+            <h2>${m.name}</h2>
+            <div class="role">${m.role}</div>
+            <div class="dept">${m.department}</div>
+            <div class="joined">Joined ${new Date(m.joined_at).toLocaleDateString('en-US', { year:'numeric', month:'short' })}</div>
+            <span class="tag">${m.location}</span>
+          </div>`;
+      });
+
+      meta.textContent =
+        `${data.members.length} members loaded from ${data.source} in ${data.query_ms}ms`;
+
+    } catch (err) {
+      status.className = 'error';
+      status.textContent = `Failed to load data: ${err.message}`;
+    }
+  }
+
+  // --- MODAL LOGIC ---
+  function openModal() {
+    document.getElementById('add-member-form').reset();
+    // Set default date to today
+    document.getElementById('m-date').valueAsDate = new Date();
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  // --- SUBMIT LOGIC ---
+  async function submitMember(e) {
+    e.preventDefault();
+
+    const newMember = {
+      name: document.getElementById('m-name').value,
+      role: document.getElementById('m-role').value,
+      department: document.getElementById('m-dept').value,
+      location: document.getElementById('m-loc').value,
+      joined_at: document.getElementById('m-date').value
+    };
+
+    const status = document.getElementById('status');
+    status.className = 'loading';
+    status.textContent = 'Adding new member...';
+    status.style.display = 'block';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMember)
+      });
+
+      if (!res.ok) throw new Error('Failed to add new member');
+
+      closeModal();
+      loadMembers(); // Reload the list
+    } catch (err) {
+      status.className = 'error';
+      status.textContent = `Error: ${err.message}`;
+    }
+  }
+
+  // Close modal if clicking outside content
+  window.onclick = function(event) {
+    if (event.target == modal) closeModal();
+  }
+
+  // Initial Load
+  loadMembers();
+</script>
+</body>
+</html>
