@@ -93,7 +93,7 @@ jobs:
           ssh -i ~/.ssh/id_rsa \
               -o StrictHostKeyChecking=no \
               ubuntu@${{ secrets.SERVER_PUBLIC_IP }} \
-              "bash -c 'cd /var/app/backend && source ~/.nvm/nvm.sh && nvm use default && npm install && sudo -E env \"PATH=$PATH\" pm2 restart nt-api'"
+              "bash -c 'cd /var/app/backend && source ~/.nvm/nvm.sh && nvm use default && npm install && sudo \$(which pm2) restart nt-api'"
       - name: Cleanup
         if: always()
         run: rm -f ~/.ssh/id_rsa

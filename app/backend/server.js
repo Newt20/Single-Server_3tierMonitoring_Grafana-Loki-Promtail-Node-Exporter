@@ -58,7 +58,7 @@ const pool = mysql.createPool({
       [name, role, department, location, joined_at]
     );
   }
-  console.log('[seed] Inserted: 8 seed team members');
+  console.log('[seed] Inserted: 8 seed members');
 })();
 
 // 3. Main App Server (Port 8080)
