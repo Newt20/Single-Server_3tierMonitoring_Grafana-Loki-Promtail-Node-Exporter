@@ -96,7 +96,6 @@ jobs:
               "cd /var/app/backend && \
                sudo -i bash -c 'cd /var/app/backend && source /root/.nvm/nvm.sh && npm install --omit=dev && pm2 reload nt-api && pm2 save && \
                chown -R ubuntu:ubuntu /var/app/backend'"
-
       - name: Cleanup
         if: always()
         run: rm -f ~/.ssh/id_rsa
