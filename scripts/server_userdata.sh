@@ -359,6 +359,9 @@ cd /var/app/backend
 npm install
 pm2 start server.js --name nt-api
 pm2 startup systemd -u root --hp /root
+env PATH=$PATH:/home/ubuntu/.nvm/versions/node/v18.20.8/bin pm2 startup systemd -u ubuntu --hp /home/ubuntu
+
+
 pm2 save
 
 # 4. Nginx Frontend
