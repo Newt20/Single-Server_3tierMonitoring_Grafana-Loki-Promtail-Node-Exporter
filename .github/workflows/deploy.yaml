@@ -47,6 +47,7 @@ jobs:
         run: |
           rsync -avz \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            --exclude node_modules \
             ./app/frontend/ \
             ubuntu@${{ secrets.SERVER_PUBLIC_IP }}:/var/www/html/app/
 
@@ -92,7 +93,9 @@ jobs:
           ssh -i ~/.ssh/id_rsa \
               -o StrictHostKeyChecking=no \
               ubuntu@${{ secrets.SERVER_PUBLIC_IP }} \
-              "cd /var/app/backend && npm install && sudo pm2 restart nt-api"
+              "cd /var/app/backend && \
+               sudo -i bash -c 'cd /var/app/backend && source /root/.nvm/nvm.sh && npm install --omit=dev && pm2 reload nt-api && pm2 save && \
+               chown -R ubuntu:ubuntu /var/app/backend'"
 
       - name: Cleanup
         if: always()
